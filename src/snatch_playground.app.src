@@ -1,0 +1,11 @@
+{application, snatch_playground,
+ [{description, "Description of Snatch Playground"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {env, []},
+  {modules, []}
+ ]}.

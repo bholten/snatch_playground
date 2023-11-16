@@ -1,0 +1,35 @@
+service: local-snatch-dev
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: local
+  region: us-east-1
+
+plugins:
+  - serverless-localstack
+
+custom:
+  localstack:
+    stages:
+      - local
+    host: http://localhost
+    edgePort: 4566
+    autostart: true
+    lambda:
+      mountCode: true
+
+resources:
+  Resources:
+    SQSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: LocalSQSQueue
+    SNSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: LocalSNSQueue
+    SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: LocalSNSTopic
