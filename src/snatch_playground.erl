@@ -1,24 +1,30 @@
 -module(snatch_playground).
 -export([main/1]).
 
+-define(TEST_MESSAGE, <<"<iq id=\"test-bot\" to=\"alice@localhost\" from=\"bob@localhost/pc\" type=\"get\"><query/></iq>">>).
+-define(TEST_ID, <<"id">>).
+
 main(_Args) ->
     Args = init:get_plain_arguments(), %% TODO
     ParsedConfig = parse_args(Args),
-    {ok, _Pid} = application:ensure_all_started(snatch),
-    {ok, SqsPid} = claws_aws_sqs:start_link(ParsedConfig),
-    {ok, SnsPid} = claws_aws_sns:start_link(ParsedConfig),
+    % {ok, SqsPid} = snatch:start_link(claws_xmpp, claws_aws_sqs, ParsedConfig),
+    {ok, SnsPid} = snatch:start_link(claws_xmpp, claws_aws_sns, ParsedConfig),
 
-    ok = gen_server:stop(SqsPid),
+    SnsPid ! {send, ?TEST_MESSAGE, ?TEST_ID},
+
+    % ok = gen_server:stop(SqsPid),
     ok = gen_server:stop(SnsPid),
     ok = application:stop(snatch),
     halt().
 
-parse_args(_Args) -> #{
-    access_key_id => "dummy_access_id",
-    secret_access_key => "dummy_secret_key",
-    region => "dummy_region",
-    queue_url => "dummy_queue_url",
-    sns_host => "http://localhost:4566",
-    sqs_module => erlcloud_sqs,
-    sns_module => erlcloud_sns
-}.
+parse_args(Args) ->
+    lists:foldl(fun parse_arg/2, #{}, Args).
+
+parse_arg(Arg, Acc) ->
+    case string:split(Arg, "=", all) of
+        [Key, Value] ->
+            AtomKey = list_to_atom(string:trim(Key)),
+            maps:put(AtomKey, string:trim(Value), Acc);
+        _ ->
+            Acc
+    end.
