@@ -2,13 +2,14 @@
 -export([main/1]).
 
 -define(TEST_MESSAGE, <<"<iq id=\"test-bot\" to=\"alice@localhost\" from=\"bob@localhost/pc\" type=\"get\"><query/></iq>">>).
--define(TEST_ID, <<"id">>).
+-define(TEST_ID, <<"LocalSnsQueue">>).
 
 main(_Args) ->
-    Args = init:get_plain_arguments(), %% TODO
-    ParsedConfig = parse_args(Args),
+    % Args = init:get_plain_arguments(), %% TODO
+    % ParsedConfig = parse_args(Args),
+    ok = application:ensure_all_started(snatch),
     % {ok, SqsPid} = snatch:start_link(claws_xmpp, claws_aws_sqs, ParsedConfig),
-    {ok, SnsPid} = snatch:start_link(claws_xmpp, claws_aws_sns, ParsedConfig),
+    SnsPid = start_sns_claw_localstack(),
 
     SnsPid ! {send, ?TEST_MESSAGE, ?TEST_ID},
 
@@ -28,3 +29,15 @@ parse_arg(Arg, Acc) ->
         _ ->
             Acc
     end.
+
+start_sns_claw_localstack() ->
+    DefaultConfig = #{
+        access_key_id => "foo",
+        secret_access_key => "bar",
+        sns_host => "localhost",
+        sns_scheme => "https://",
+        sns_port => "4566"
+    },
+    {ok, Pid} = claws_aws_sns:start_link(DefaultConfig),
+    Pid.
+
