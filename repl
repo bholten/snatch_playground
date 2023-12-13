@@ -1,0 +1,30 @@
+rebar3 shell --config=config/sys.config
+
+observer:start().
+
+rr("_build/default/lib/erlcloud/include/erlcloud_aws.hrl").
+
+{ok, _} = application:ensure_all_started(erlcloud).
+{ok, _} = application:ensure_all_started(snatch).
+
+ok = erlang:load_module(erlcloud_sns, []),
+
+AwsConfig = #aws_config{
+        access_key_id = "test",
+        secret_access_key = "test",
+        aws_region = "us-east-1",
+        sns_host = "localhost",
+        sns_scheme = "http://",
+        sns_port = 4566
+    }.
+
+{ok, SnsPid} = claws_aws_sns:start_link(AwsConfig).
+
+TestMessage = <<"<iq id=\"test-bot\" to=\"alice@localhost\" from=\"bob@localhost/pc\" type=\"get\"><query/></iq>">>.
+TestSnsTopic = <<"arn:aws:sns:us-east-1:000000000000:LocalSNSTopic">>.
+TestSqsQueue = <<"http://localhost:4566/000000000000/LocalSQSQueue">>.
+
+
+claws_aws_sns:send(TestMessage, TestSnsTopic).
+
+
