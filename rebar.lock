@@ -51,7 +51,7 @@
  {<<"snappyer">>,{pkg,<<"snappyer">>,<<"1.2.9">>},0},
  {<<"snatch">>,
   {git,"https://github.com/bholten/snatch.git",
-       {ref,"c6909f22cf59a019b779b203049de180da4530bb"}},
+       {ref,"4b598afffd7c9560ce83259fdf8a5e25fb4a0a3b"}},
   0},
  {<<"supervisor3">>,{pkg,<<"supervisor3">>,<<"1.1.5">>},2},
  {<<"uuid">>,

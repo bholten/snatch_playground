@@ -13,13 +13,11 @@ main(_Args) ->
     % SnsPid = start_claw(sns),
     % SqsPid = start_claw(sqs),
     SnsPid = start_claw(aws),
-    SqsPid = start_claw(aws),
 
     % ok = claws_aws_sns:send(?TEST_MESSAGE, ?TEST_SNS_TOPIC),
     % ok = claws_aws_sqs:send(?TEST_MESSAGE, ?TEST_SQS_QUEUE),
 
     ok = gen_server:stop(SnsPid),
-    ok = gen_server:stop(SqsPid),
     ok = application:stop(snatch),
     halt().
 
