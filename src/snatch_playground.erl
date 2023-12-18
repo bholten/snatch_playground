@@ -10,40 +10,24 @@
 main(_Args) ->
     {ok, _} = application:ensure_all_started(erlcloud),
     {ok, _} = application:ensure_all_started(snatch),
-    % SnsPid = start_claw(sns),
-    % SqsPid = start_claw(sqs),
-    SnsPid = start_claw(aws),
 
-    % ok = claws_aws_sns:send(?TEST_MESSAGE, ?TEST_SNS_TOPIC),
-    % ok = claws_aws_sqs:send(?TEST_MESSAGE, ?TEST_SQS_QUEUE),
+    AwsConfig = case wrap_error(fun() -> erlcloud_aws:auto_config() end) of
+        {ok, Config} -> Config;
+        {error, Reason} ->
+            io:format("Error with auto_config/0: ~p~n", [Reason]),
+            erlcloud_aws:default_config()
+    end,
 
+    io:format("AWS Config: ~p~n", [AwsConfig]),
+
+    {ok, SnsPid} = claws_aws_sns:start_link(AwsConfig),
     ok = gen_server:stop(SnsPid),
     ok = application:stop(snatch),
     halt().
 
-start_claw(sns) ->
-    AwsConfig = #aws_config{
-        access_key_id = "test",
-        secret_access_key = "test",
-        aws_region = "us-east-1",
-        sns_host = "localhost",
-        sns_scheme = "http://",
-        sns_port = 4566
-    },
-    {ok, Pid} = claws_aws_sns:start_link(AwsConfig),
-    Pid;
-
-start_claw(sqs) ->
-    AwsConfig = #aws_config{
-        access_key_id = "test",
-        secret_access_key = "test"
-        % sqs_host = "localhost"
-        % sqs_protocol = "http://",
-        % sqs_port = 4566
-    },
-    {ok, Pid} = claws_aws_sqs:start_link(AwsConfig),
-    Pid;
-
-start_claw(aws) ->
-    {ok, Pid} = claws_aws_sns:start_link(),
-    Pid.
+wrap_error(Fun) ->
+    try
+        Fun()
+    catch _:Reason ->
+        {error, {lhttpc_error, Reason}}
+    end.
