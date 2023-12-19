@@ -11,23 +11,27 @@ main(_Args) ->
     {ok, _} = application:ensure_all_started(erlcloud),
     {ok, _} = application:ensure_all_started(snatch),
 
-    AwsConfig = case wrap_error(fun() -> erlcloud_aws:auto_config() end) of
-        {ok, Config} -> Config;
-        {error, Reason} ->
-            io:format("Error with auto_config/0: ~p~n", [Reason]),
-            erlcloud_aws:default_config()
-    end,
+    % AwsConfig = case wrap_error(fun() -> erlcloud_aws:auto_config() end) of
+    %     {ok, Config} -> Config;
+    %     {error, Reason} ->
+    %         io:format("Error with auto_config/0: ~p~n", [Reason]),
+    %         erlcloud_aws:default_config()
+    % end,
 
-    io:format("AWS Config: ~p~n", [AwsConfig]),
+    % io:format("AWS Config: ~p~n", [AwsConfig]),
 
-    {ok, SnsPid} = claws_aws_sns:start_link(AwsConfig),
-    ok = gen_server:stop(SnsPid),
+    % {ok, SnsPid} = claws_aws_sns:start_link(),
+    % ok = gen_server:stop(SnsPid),
+    {ok, _SupPid} = snatch_playground_sup:start_link(),
+    Children = supervisor:which_children(snatch_playground_sup),
+    io:format("Children: ~p~n", [Children]),
+
     ok = application:stop(snatch),
     halt().
 
-wrap_error(Fun) ->
-    try
-        Fun()
-    catch _:Reason ->
-        {error, {lhttpc_error, Reason}}
-    end.
+% wrap_error(Fun) ->
+%     try
+%         Fun()
+%     catch _:Reason ->
+%         {error, {lhttpc_error, Reason}}
+%     end.
