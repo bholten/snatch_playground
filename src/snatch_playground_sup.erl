@@ -7,16 +7,14 @@
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-init(_Opts) ->
-    ChildSpecs = [
-        #{
-            id => 'executor_claws_aws_sns',
-            start => {claws_aws_sns, start_link, []},
-            restart => permanent,
-            shutdown => 5000,
-            type => worker,
-            modules => [claws_aws_sns]
-        }
-    ],
-    {ok, {{one_for_one, 5, 10}, ChildSpecs}}. %% Just an example
+init([]) ->
+    {ok, Pid} = claws_aws_sqs:start_link(),
+    {ok, PlaygroundPid} = gen_server:start_link(snatch_playground_example_listener, [], []),
+    {ok, SqsPid} = snatch:start_link(claws_aws_sqs, PlaygroundPid),
+    ChildSpec = [
+        {claws_aws_sqs_mod, Pid},
+        {snatch_playground_example_listener, PlaygroundPid},
+        {snatch_sqs, SqsPid}
+        ],
+    {ok, {{one_for_one, 5, 10}, ChildSpec}}. %% Just an example
 

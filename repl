@@ -3,6 +3,11 @@ rebar3 shell --config=config/sys.config
 observer:start().
 
 rr("_build/default/lib/erlcloud/include/erlcloud_aws.hrl").
+dbg:start().
+dbg:tracer().
+dbg:tpl(erlcloud_aws, aws_request4, '_', []).
+dbg:tpl(lhttpc_client, execute, '_', []).
+dbg:p(all, c).
 
 {ok, _} = application:ensure_all_started(erlcloud).
 {ok, _} = application:ensure_all_started(snatch).
@@ -11,18 +16,28 @@ AwsConfig = #aws_config{
         access_key_id = "test",
         secret_access_key = "test",
         aws_region = "us-east-1",
-        sns_host = "localhost",
+        sns_host = "host.docker.internal",
         sns_scheme = "http://",
-        sns_port = 4566
+        sns_port = 4566,
+        sqs_host = "host.docker.internal",
+        sqs_protocol = "http",
+        sqs_port = 4566
     }.
 
+{ok, SqsPid} = claws_aws_sqs:start_link(AwsConfig).
 {ok, SnsPid} = claws_aws_sns:start_link(AwsConfig).
 
-TestMessage = <<"<iq id=\"test-bot\" to=\"alice@localhost\" from=\"bob@localhost/pc\" type=\"get\"><query/></iq>">>.
+TestMessage = <<"<iq id=\"test-bot\" to=\"alice@localhost\" from=\"bob@localhost/pc\" type=\"get\"><query/></iq>">>.x
 TestSnsTopic = <<"arn:aws:sns:us-east-1:000000000000:LocalSNSTopic">>.
-TestSqsQueue = <<"http://localhost:4566/000000000000/LocalSQSQueue">>.
+TestSqsQueue = <<"http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/LocalSQSQueue">>.
 
+erlcloud_aws:configure(AwsConfig).
+erlcloud_sqs:send_message("000000000000/LocalSQSQueue", TestMessage).
+erlcloud_sqs:send_message(TestSqsQueue, TestMessage).
+
+erlcloud_sqs:receive_message("000000000000/LocalSQSQueue1")
 
 claws_aws_sns:send(TestMessage, TestSnsTopic).
+claws_aws_sqs:send(TestMessage, "LocalSQSQueue").
 
 
